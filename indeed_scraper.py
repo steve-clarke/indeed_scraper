@@ -6,7 +6,7 @@ import selenium
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
-from web_extension import get_job_description
+from web_extension import get_job_descriptions
 
 def find_jobs():
     job_title = input("Enter job title: ")
@@ -16,10 +16,10 @@ def find_jobs():
     jobs_list, n_listings   = extract_job_information(jobs, url)
     print('{} new job postings retrieved.'.format(n_listings))
 
-    save_jobs_to_excel(jobs_list, "results.xlsx")
+    save_to_excel(jobs_list, "results.xlsx")
 
 ## -- save to excel -- ##
-def save_jobs_to_excel(jobs_list, filename):
+def save_to_excel(jobs_list, filename):
     jobs = pd.DataFrame(jobs_list)
     jobs.to_excel(filename)
 
@@ -45,9 +45,9 @@ def scan_listings(job_title, location):
         page    = requests.get(url)
         soup    = BeautifulSoup(page.content, "html.parser")
 
-        try:    
+        try:    # if 'jobs' exists, add to it
             jobs.append(soup.find(id="resultsCol"))
-        except NameError:
+        except NameError: # ...else, create it
             jobs = soup.find(id="resultsCol")
 
     return jobs, url
@@ -85,7 +85,7 @@ def extract_job_information(jobs, url):
     extracted_info.append(companies)
 
     cols.append('descriptions')
-    descriptions = get_job_description(url, descriptions)
+    descriptions = get_job_descriptions(url, descriptions)
     extracted_info.append(descriptions)
     
     jobs_list = {}
