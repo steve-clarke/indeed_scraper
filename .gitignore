@@ -2,3 +2,6 @@ __pycache__
 .vscode
 venv
 *.xlsx
+.gitignore
+.gitattributes
+.DS_Store
