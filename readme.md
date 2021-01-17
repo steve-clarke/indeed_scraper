@@ -1,6 +1,6 @@
 # Indeed Data Scraper
 
-This webscraper script crawls au.indeed.com for job information based on user input. This is an early version and will be subject to new functionality soon (see _future functionality_ below).
+This webscraper script crawls au.indeed.com for job information based on user input. This project is still in _alpha_ and will be subject to new functionality soon (see _future functionality_ below).
 
 ## Functionality
 
@@ -21,7 +21,7 @@ $: pip3 install pandas
 $: pip3 install requests
 ```
 
-In an interactive session, run:
+Then, in an interactive session, run:
 ```
 >>> import indeed_scraper
 >>> indeed_scraper.find_jobs()
@@ -33,11 +33,13 @@ An xlsx file will be output upon completion.
 
 ## Future Functionality
 
-My final goal for this project is to process the job description data, in the hopes that they will reveal the most common technologies and skills that firms want their employees to be proficient in.
+My goal for this project is different from similar projects, because I want to process the **job description** data, in the hopes that they will reveal the most common technologies and skills that firms want their employees to be proficient in.
+
+I plan to do this by identifying the keywords that occur most often in the set of all available job descriptions (ignoring common English words like 'a', 'the' etc). I suspect a pattern of common technologies could emerge as commonly included in job descriptions - for example, Python, Django, C/C++, etc.
 
 As such, the following functionality is yet to be added: 
 
-* Job description keyword processing
+* Job description keyword processing (as described above)
 * Automatic final page selection (currently supports reading multiple pages of job ads, but defaults to crawling first page only)
 * Support for multiple OSes and Chrome versions (see _compatibility_ below)
 
