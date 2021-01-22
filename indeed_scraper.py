@@ -7,6 +7,7 @@ import json
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
+from keyword_analyser import get_description_keywords
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -16,10 +17,10 @@ from selenium.common.exceptions import ElementClickInterceptedException, Timeout
 
 
 def find_jobs():
-    countrycode     = input("Enter country prefix (eg. au, sg, hk): ")
-    locality        = input("Enter locality: ")
-    job_title       = input("Enter job title: ")
-    num_pages       = input("Number of pages to be searched: ")
+    countrycode     = 'au'#input("Enter country prefix (eg. au, sg, hk): ")
+    locality        = 'perth'#input("Enter locality: ")
+    job_title       = 'software engineer'#input("Enter job title: ")
+    num_pages       = 1#input("Number of pages to be searched: ")
 
     urls        = get_urls(countrycode, locality, job_title, num_pages)
     jobs        = get_jobs(urls)
@@ -27,7 +28,9 @@ def find_jobs():
     jobs_data, n_listings = extract_data(jobs, urls)
     print('{} new job postings retrieved.'.format(n_listings))
 
-    save_to_excel(jobs_data, "results.xlsx")
+    get_description_keywords(str(jobs_data['descriptions']))
+
+    #save_to_excel(jobs_data, "results.xlsx")
 
 
 def save_to_excel(jobs_data, filename):
@@ -40,7 +43,7 @@ def get_urls(countrycode, locality, job_title, num_pages):
 
     urls = []
 
-    pages = np.arange(0, num_pages, 10) # set the second argument to scan multiple pages. '10' defaults to first page only
+    pages = np.arange(0, num_pages, 10)
     for page in pages:
         url_variables   = {'q' : job_title,
                         'l' : locality,
@@ -57,9 +60,7 @@ def get_urls(countrycode, locality, job_title, num_pages):
 
 
 def get_jobs(urls):
-
     for url in urls:
-
         print('scanning {} ...'.format(url))
         page    = requests.get(url)
         soup    = BeautifulSoup(page.content, "html.parser")
@@ -97,14 +98,14 @@ def extract_data(jobs, urls):
         descriptions = get_job_descriptions(url, descriptions)
     extracted_info.append(descriptions)
     
-    jobs_list = {}
+    jobs_data = {}
     
     for j in range(len(cols)):
-        jobs_list[cols[j]] = extracted_info[j]
+        jobs_data[cols[j]] = extracted_info[j]
     
     n_listings = len(extracted_info[0])
     
-    return jobs_list, n_listings
+    return jobs_data, n_listings
 
 
 def get_job_title(job_elem) :
