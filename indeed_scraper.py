@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 from keyword_analyser import get_description_keywords
+import string
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -17,10 +18,10 @@ from selenium.common.exceptions import ElementClickInterceptedException, Timeout
 
 
 def find_jobs():
-    countrycode     = 'au'#input("Enter country prefix (eg. au, sg, hk): ")
-    locality        = 'perth'#input("Enter locality: ")
-    job_title       = 'software engineer'#input("Enter job title: ")
-    num_pages       = 1#input("Number of pages to be searched: ")
+    countrycode     = input("Enter country prefix (eg. au, sg, hk): ")
+    locality        = input("Enter locality: ")
+    job_title       = input("Enter job title: ")
+    num_pages       = input("Number of pages to be searched: ")
 
     urls        = get_urls(countrycode, locality, job_title, num_pages)
     jobs        = get_jobs(urls)
@@ -28,8 +29,9 @@ def find_jobs():
     jobs_data, n_listings = extract_data(jobs, urls)
     print('{} new job postings retrieved.'.format(n_listings))
 
-    get_description_keywords(str(jobs_data['descriptions']))
+    get_description_keywords(jobs_data['descriptions'])
 
+    # Option below to save recorded data to a spreadsheet:
     #save_to_excel(jobs_data, "results.xlsx")
 
 
@@ -59,15 +61,16 @@ def get_urls(countrycode, locality, job_title, num_pages):
     return urls
 
 
-def get_jobs(urls):
+def get_jobs(urls): 
+    jobs = None
     for url in urls:
         print('scanning {} ...'.format(url))
         page    = requests.get(url)
         soup    = BeautifulSoup(page.content, "html.parser")
 
-        try:    # if 'jobs' exists, add to it
+        if jobs is not None:    # if 'jobs' exists, add to it
             jobs.append(soup.find(id="resultsCol"))
-        except NameError: # ...else, create it
+        else: # ...else, create it
             jobs = soup.find(id="resultsCol")
 
     return jobs
@@ -145,7 +148,7 @@ def get_job_descriptions(url, descriptions):
     def click_on_job_and_add_description(job_card):
         job_card.click()
         wait.until(EC.presence_of_element_located((By.ID, 'vjs-content')))
-        new_descriptions.append(driver.find_element_by_id('vjs-content').text)
+        new_descriptions.append(set(str(driver.find_element_by_id('vjs-content').text).lower().replace('\n', ' ').translate(str.maketrans('', '', string.punctuation)).split(' ')))
 
     for job in jobs:
         wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'jobsearch-SerpJobCard')))
@@ -159,3 +162,4 @@ def get_job_descriptions(url, descriptions):
     driver.close()
     driver.quit()
     return new_descriptions
+
