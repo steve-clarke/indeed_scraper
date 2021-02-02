@@ -11,7 +11,7 @@ I have been careful to save the keywords from each description only once, so as 
 ## Functionality
 
 * Accepts user input for job type and location
-* Uses BeautifulSoup and Selenium libraries in Python to extract data from the website's HTML structure (currently supports Indeed Australia)
+* Uses BeautifulSoup and Selenium libraries in Python to extract data from the website's HTML structure
 * Collates data including job name, company name, and the description keywords from each listing 
 * Analyses the set of all description keywords to determine which keywords appear most often
 * Optionally offers data in a spreadsheet format for further processing
