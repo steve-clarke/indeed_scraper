@@ -22,6 +22,7 @@ def find_jobs():
     locality        = input("Enter locality: ")
     job_title       = input("Enter job title: ")
     num_pages       = input("Number of pages to be searched: ")
+    want_excel      = input("Do you want to output an excel spreadsheet with the data (Y/N): ")
 
     urls        = get_urls(countrycode, locality, job_title, num_pages)
     jobs        = get_jobs(urls)
@@ -32,7 +33,8 @@ def find_jobs():
     get_description_keywords(jobs_data['descriptions'])
 
     # Option below to save recorded data to a spreadsheet:
-    #save_to_excel(jobs_data, "results.xlsx")
+    if want_excel is 'Y':
+        save_to_excel(jobs_data, "results.xlsx")
 
 
 def save_to_excel(jobs_data, filename):
