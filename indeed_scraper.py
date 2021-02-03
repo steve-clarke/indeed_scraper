@@ -9,6 +9,9 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from keyword_analyser import get_description_keywords
 import string
+import re
+import math
+import pprint
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -18,49 +21,87 @@ from selenium.common.exceptions import ElementClickInterceptedException, Timeout
 
 
 def find_jobs():
-    countrycode     = input("Enter country prefix (eg. au, sg, hk): ")
-    locality        = input("Enter locality: ")
-    job_title       = input("Enter job title: ")
-    num_pages       = input("Number of pages to be searched: ")
-    want_excel      = input("Do you want to output an excel spreadsheet with the data (Y/N): ")
+    # parameters for search
+    countrycode     = 'au'
+    locality        = 'australia'
+    queries         = ['graduate economist', # 12 jobs
+                        'trainee economist', # 1 job, unrelated
+                        'financial economist', # 19 jobs
+                        'quantitative economist', #19 jobs
+                        'economic researcher', # 43 jobs
+                        'economic analyst', # 268 jobs
+                        'econometrician', # 5 jobs
+                        'behavioural economist', # 1 job
+                        'economic forecaster', # 3 jobs
+                        'macro economist', # 0 jobs
+                        'pricing analyst', # 205 jobs
+                        'regulatory economist', # 26 jobs
+                        'macroeconomics'] # 31 jobs
+    num_pages       = 1
+    job_age         = 15 
+    want_excel      = 'Y'
 
-    urls        = get_urls(countrycode, locality, job_title, num_pages)
-    jobs        = get_jobs(urls)
+    query = ', '.join(queries)
 
-    jobs_data, n_listings = extract_data(jobs, urls)
-    print('{} new job postings retrieved.'.format(n_listings))
+    # construct URLs to be scraped, based on parameters above
+    urls        = get_urls(countrycode, locality, query, num_pages, job_age)
 
-    get_description_keywords(jobs_data['descriptions'])
+    #jobs        = get_jobs(urls)
+
+    #jobs_data, n_listings = extract_data(jobs, urls)
+    #print('{} new job postings retrieved.'.format(n_listings))
+
+    #get_description_keywords(jobs_data['descriptions'])
 
     # Option below to save recorded data to a spreadsheet:
-    if want_excel is 'Y':
-        save_to_excel(jobs_data, "results.xlsx")
-
+    #if want_excel is 'Y':
+        #save_to_excel(jobs_data, "results.xlsx")
 
 def save_to_excel(jobs_data, filename):
     jobs = pd.DataFrame(jobs_data)
     jobs.to_excel(filename)
 
 
-def get_urls(countrycode, locality, job_title, num_pages):
-    num_pages   = int(str(num_pages) + str('0'))
-
-    urls = []
-
-    pages = np.arange(0, num_pages, 10)
-    for page in pages:
-        url_variables   = {'q' : job_title,
+def get_urls(countrycode, locality, query, num_pages, job_age):
+    # search URL for number of pages to be searched...
+    url_variables   = {'q' : query,
                         'l' : locality,
-                        'fromage' : 'last',
-                        'sort' : 'date', 
-                        'start': page
+                        'limit': 50
+                        }
+    url = ('https://' + countrycode + '.indeed.com/jobs?' + urllib.parse.urlencode(url_variables))
+    print(url)
+    start_from       = get_n_pages(url) * 50
+
+    # aggregate URLs to be scraped...
+    urls = []
+    pages = np.arange(0, start_from, 50)
+    for page in pages:
+        url_variables   = {'q' : query,
+                        'l' : locality,
+                        'start': page,
+                        'limit': 50
                         }
         url = ('https://' + countrycode + '.indeed.com/jobs?' + urllib.parse.urlencode(url_variables))
-        print(url)
         urls.append(url)
 
-    print(*urls, sep='\n')
+    #print URLs to terminal
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(urls)
+
     return urls
+
+def get_n_pages(url):
+    page    = requests.get(url)
+    soup    = BeautifulSoup(page.content, "html.parser")
+
+    # get the number of jobs available from the search, and uses this to get number of pages to be searched
+    n_jobs = str(soup.find(id="searchCountPages"))
+    num = int(re.findall('\d+', n_jobs)[1])
+    print('results: ' + str(num))
+    pages = math.ceil(num / 50)
+    print('pages: ' + str(pages))
+
+    return pages
 
 
 def get_jobs(urls): 
@@ -90,7 +131,7 @@ def extract_data(jobs, urls):
 
     cols.append('titles')
     for job_elem in job_elems:
-        titles.append(get_job_title(job_elem))
+        titles.append(get_query(job_elem))
     extracted_info.append(titles)
 
     cols.append('companies')
@@ -113,7 +154,7 @@ def extract_data(jobs, urls):
     return jobs_data, n_listings
 
 
-def get_job_title(job_elem) :
+def get_query(job_elem) :
     title_elem  = job_elem.find('h2', class_='title')
     title       = title_elem.text.strip()
     return title
